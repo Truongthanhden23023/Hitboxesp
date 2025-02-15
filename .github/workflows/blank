@@ -1,17 +1,10 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
 
 -- Kích thước cố định của ESP & Hitbox
 local hitboxSize = 7
 
--- Xác định kẻ địch hoặc đồng đội
-local function isEnemy(player)
-    return player.Team ~= LocalPlayer.Team
-end
-
 local function createESP(player)
-    if player == LocalPlayer then return end -- Không tạo ESP cho chính mình
     player.CharacterAdded:Connect(function(character)
         repeat wait() until character:FindFirstChild("HumanoidRootPart")
 
@@ -19,8 +12,8 @@ local function createESP(player)
         local root = character:FindFirstChild("HumanoidRootPart")
         if not head or not root then return end
 
-        -- Xác định màu sắc theo team
-        local color = isEnemy(player) and Color3.new(1, 0, 0) or Color3.new(0, 0, 1)
+        -- Màu sắc cố định (hoặc có thể thay đổi theo Team)
+        local color = Color3.new(1, 1, 1) -- Màu trắng (hiển thị tất cả)
 
         -- 🟢 Tạo Name ESP
         local billboard = Instance.new("BillboardGui")
@@ -73,7 +66,7 @@ local function createESP(player)
     end)
 end
 
--- Áp dụng ESP cho tất cả người chơi hiện tại
+-- Áp dụng ESP cho tất cả người chơi (kể cả LocalPlayer)
 for _, player in pairs(Players:GetPlayers()) do
     createESP(player)
 end
