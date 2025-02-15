@@ -1,43 +1,51 @@
-local function applyESP(player)
-    if player == game.Players.LocalPlayer then return end
-    local character = player.Character
-    if not character then return end
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-    -- Tạo ESP Box
-    local highlight = Instance.new("Highlight")
-    highlight.Parent = character
-    highlight.Adornee = character
-    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Màu đỏ
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Viền trắng
-    highlight.FillTransparency = 0.5 -- Độ trong suốt bên trong
-    highlight.OutlineTransparency = 0 -- Viền rõ ràng
-end
-
-local function modifyHitbox(player)
+local function createESP(player)
+    if player == Players.LocalPlayer then return end  -- Không hiển thị cho chính mình
     local character = player.Character
     if not character then return end
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if humanoidRootPart then
-        humanoidRootPart.Size = Vector3.new(5, 5, 5) -- Mở rộng hitbox
-        humanoidRootPart.Transparency = 0.5 -- Làm hitbox trong suốt một phần
-        humanoidRootPart.BrickColor = BrickColor.new("Bright red") -- Đổi màu hitbox thành đỏ
-        humanoidRootPart.Material = Enum.Material.Neon -- Làm hitbox phát sáng
-    end
+    if not humanoidRootPart then return end
+
+    -- 📌 **Tạo hiển thị tên trên đầu**
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Adornee = humanoidRootPart
+    Billboard.Size = UDim2.new(0, 200, 0, 50)
+    Billboard.StudsOffset = Vector3.new(0, 2, 0)
+    Billboard.AlwaysOnTop = true
+
+    local TextLabel = Instance.new("TextLabel", Billboard)
+    TextLabel.Size = UDim2.new(1, 0, 1, 0)
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Text = player.Name
+    TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Màu đỏ
+    TextLabel.TextScaled = true
+
+    Billboard.Parent = humanoidRootPart
+
+    -- 📌 **Mở rộng Hitbox**
+    humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Tăng hitbox
+    humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
+
+    -- 📌 **Tạo hiệu ứng phát sáng (Highlight)**
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.FillColor = Color3.fromRGB(0, 255, 0)  -- Màu xanh lá
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.1
 end
 
--- Áp dụng ESP và Hitbox cho tất cả người chơi
-for _, player in pairs(game.Players:GetPlayers()) do
-    if player ~= game.Players.LocalPlayer then
-        applyESP(player)
-        modifyHitbox(player)
-    end
-end
-
--- Lắng nghe khi có người chơi mới tham gia
-game.Players.PlayerAdded:Connect(function(player)
+local function onPlayerAdded(player)
     player.CharacterAdded:Connect(function()
-        applyESP(player)
-        modifyHitbox(player)
+        wait(1)  -- Chờ nhân vật load xong
+        createESP(player)
     end)
-end)
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    onPlayerAdded(player)
+end
+Players.PlayerAdded:Connect(onPlayerAdded)
