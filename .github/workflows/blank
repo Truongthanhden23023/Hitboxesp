@@ -1,35 +1,72 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local hitboxSize = 20 -- Kích thước mặc định của Hitbox
+local espColor = Color3.new(1, 0, 0) -- Màu đỏ mặc định
 
--- 🔹 Lấy giá trị hitbox từ UI thay vì slider
-local HitboxUI = game.Players.LocalPlayer.PlayerGui.ScreenGui.Hitbox  -- Đổi nếu đường dẫn khác
-local hitboxSize = tonumber(HitboxUI.Text) or 5  -- Mặc định là 5 nếu không có giá trị
+-- Hàm đổi màu ESP giữa đỏ và xanh
+local function toggleESPColor()
+    if espColor == Color3.new(1, 0, 0) then
+        espColor = Color3.new(0, 0, 1) -- Chuyển sang xanh
+    else
+        espColor = Color3.new(1, 0, 0) -- Chuyển lại đỏ
+    end
+    print("ESP Color Changed")
+end
 
-local function createESP(character, player)
-    if not character then return end
-    repeat wait() until character:FindFirstChild("HumanoidRootPart")
+-- Hàm cập nhật Hitbox
+local function updateHitbox()
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+            player.Character.HumanoidRootPart.Transparency = 0.5
+        end
+    end
+end
 
-    local root = character:FindFirstChild("HumanoidRootPart")
-    local head = character:FindFirstChild("Head")
-    if not root or not head then return end
+-- Nút tăng Hitbox
+local IncreaseButton = Tab:CreateButton({
+   Name = "Tăng Hitbox",
+   Callback = function()
+       hitboxSize = math.min(50, hitboxSize + 5) -- Tăng lên nhưng không quá 50
+       updateHitbox()
+   end
+})
 
-    -- 🟢 Chọn màu theo team
-    local color = (player.Team == Players.LocalPlayer.Team) and Color3.new(0, 0, 1) or Color3.new(1, 0, 0)
+-- Nút giảm Hitbox
+local DecreaseButton = Tab:CreateButton({
+   Name = "Giảm Hitbox",
+   Callback = function()
+       hitboxSize = math.max(5, hitboxSize - 5) -- Giảm nhưng không nhỏ hơn 5
+       updateHitbox()
+   end
+})
 
-    -- 📌 Name ESP
-    local billboard = Instance.new("BillboardGui", game.CoreGui)
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 100, 0, 30)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
+-- Nút đổi màu ESP
+local ToggleESPButton = Tab:CreateButton({
+   Name = "Đổi màu ESP",
+   Callback = function()
+       toggleESPColor()
+   end
+})
 
-    local textLabel = Instance.new("TextLabel", billboard)
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = player.Name
-    textLabel.TextColor3 = color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextSize = 14
+-- Hàm hiển thị ESP trên tất cả người chơi
+local function createESP(player)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local esp = Instance.new("BoxHandleAdornment")
+        esp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
+        esp.Adornee = player.Character.HumanoidRootPart
+        esp.Color3 = espColor
+        esp.AlwaysOnTop = true
+        esp.ZIndex = 10
+        esp.Parent = game.CoreGui
+    end
+end
 
-    -- 📌 Box ESP (Highlight)
+-- Cập nhật ESP cho tất cả người chơi hiện tại và mới vào
+for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+    createESP(player)
+end
+
+game:GetService("Players").PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        createESP(player)
+    end)
+end)
