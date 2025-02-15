@@ -1,9 +1,9 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- 🔹 Kết nối slider UI (Đổi đường dẫn nếu cần)
-local UserSlider = game.Players.LocalPlayer.PlayerGui.ScreenGui.Slider  
-local hitboxSize = UserSlider.Value  
+-- 🔹 Lấy giá trị hitbox từ UI thay vì slider
+local HitboxUI = game.Players.LocalPlayer.PlayerGui.ScreenGui.Hitbox  -- Đổi nếu đường dẫn khác
+local hitboxSize = tonumber(HitboxUI.Text) or 5  -- Mặc định là 5 nếu không có giá trị
 
 local function createESP(character, player)
     if not character then return end
@@ -33,55 +33,3 @@ local function createESP(character, player)
     textLabel.TextSize = 14
 
     -- 📌 Box ESP (Highlight)
-    local highlight = Instance.new("Highlight", character)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = color
-    highlight.OutlineTransparency = 0
-
-    -- 📌 Hitbox
-    local hitbox = Instance.new("Part", character)
-    hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-    hitbox.Transparency = 0.7
-    hitbox.CanCollide = false
-    hitbox.Anchored = true
-    hitbox.Color = color
-    hitbox.Material = Enum.Material.ForceField
-
-    -- 📌 Cập nhật hitbox khi slider thay đổi
-    local updateConnection
-    updateConnection = RunService.RenderStepped:Connect(function()
-        if root then
-            hitbox.Position = root.Position
-            hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-        else
-            updateConnection:Disconnect()
-        end
-    end)
-
-    -- 📌 Xóa ESP khi nhân vật chết
-    character.Destroying:Connect(function()
-        billboard:Destroy()
-        highlight:Destroy()
-        hitbox:Destroy()
-    end)
-end
-
--- 📌 Cập nhật hitbox khi kéo slider
-UserSlider.Changed:Connect(function(value)
-    hitboxSize = value
-end)
-
--- 📌 Áp dụng cho tất cả người chơi
-for _, player in pairs(Players:GetPlayers()) do
-    if player.Character then createESP(player.Character, player) end
-    player.CharacterAdded:Connect(function(character)
-        createESP(character, player)
-    end)
-end
-
--- 📌 Áp dụng cho người chơi mới vào
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        createESP(character, player)
-    end)
-end)
