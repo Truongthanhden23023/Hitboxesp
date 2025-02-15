@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 
--- 🛠 Hàm tạo ESP + Hitbox
+-- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
     if player == Players.LocalPlayer then return end  -- Không áp dụng cho chính mình
     local character = player.Character
@@ -10,7 +9,7 @@ local function createESP(player)
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then return end
 
-    -- 📌 **Tạo hiển thị tên trên đầu**
+    -- 📌 **Hiển thị tên trên đầu**
     local Billboard = Instance.new("BillboardGui")
     Billboard.Adornee = humanoidRootPart
     Billboard.Size = UDim2.new(0, 200, 0, 50)
@@ -39,21 +38,17 @@ local function createESP(player)
     highlight.OutlineTransparency = 0.1
 end
 
--- 🛠 Hàm xử lý khi có người mới vào game
-local function onPlayerAdded(player)
-    player.CharacterAdded:Connect(function()
-        wait(1)  -- Chờ nhân vật load xong
-        createESP(player)
-    end)
-end
-
--- 🚀 **Áp dụng ESP cho tất cả người chơi đã vào trước**
+-- 🛠 Áp dụng ESP + Hitbox cho tất cả người chơi đã vào trước
 for _, player in pairs(Players:GetPlayers()) do
     if player.Character then
         createESP(player)  -- Thêm ESP ngay lập tức
     end
-    onPlayerAdded(player)  -- Theo dõi người chơi mới
 end
 
--- 🚀 **Áp dụng ESP cho người chơi mới**
-Players.PlayerAdded:Connect(onPlayerAdded)
+-- 🛠 Khi một người chơi mới vào game, áp dụng ESP
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        wait(1)  -- Chờ nhân vật load xong
+        createESP(player)
+    end)
+end)
