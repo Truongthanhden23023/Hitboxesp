@@ -2,11 +2,11 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Tạo giá trị kích thước hitbox (mặc định)
-local hitboxSize = 7  
-local sliderValue = 7  -- Biến lưu giá trị từ Slider UI
+-- Kích thước mặc định
+local espSize = 7
+local hitboxSize = 7
 
--- Xác định kẻ địch hay đồng đội
+-- Xác định kẻ địch hoặc đồng đội
 local function isEnemy(player)
     return player.Team ~= LocalPlayer.Team
 end
@@ -20,7 +20,7 @@ local function createESP(player)
         local root = character:FindFirstChild("HumanoidRootPart")
         if not head or not root then return end
 
-        -- Xác định màu sắc dựa trên team
+        -- Xác định màu sắc theo team
         local color = isEnemy(player) and Color3.new(1, 0, 0) or Color3.new(0, 0, 1)
 
         -- 🟢 Tạo Name ESP
@@ -83,10 +83,11 @@ end
 -- Áp dụng ESP cho người chơi mới vào
 Players.PlayerAdded:Connect(createESP)
 
--- 🔥 Kết nối với Slider UI
+-- 🔥 Kết nối với Slider UI để điều chỉnh kích thước Hitbox & ESP
 local function onSliderChanged(value)
     hitboxSize = math.max(2, value) -- Giữ giá trị tối thiểu là 2
-    print("Hitbox Size Updated: " .. hitboxSize)
+    espSize = math.max(2, value) -- Cập nhật kích thước ESP
+    print("Updated Hitbox & ESP Size: " .. value)
 end
 
 -- Gán sự kiện cho Slider (Thay 'Slider' bằng tên thực tế của Slider trong GUI của bạn)
