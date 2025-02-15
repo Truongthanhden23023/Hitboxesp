@@ -1,27 +1,27 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- Kích thước cố định của Hitbox
-local hitboxSize = 7
+-- 🔹 Kết nối slider UI (Đổi đường dẫn nếu cần)
+local UserSlider = game.Players.LocalPlayer.PlayerGui.ScreenGui.Slider  
+local hitboxSize = UserSlider.Value  
 
-local function applyESP(character, player)
+local function createESP(character, player)
     if not character then return end
     repeat wait() until character:FindFirstChild("HumanoidRootPart")
 
-    local head = character:FindFirstChild("Head")
     local root = character:FindFirstChild("HumanoidRootPart")
-    if not head or not root then return end
+    local head = character:FindFirstChild("Head")
+    if not root or not head then return end
 
-    -- Màu sắc cố định (hoặc có thể thay đổi theo Team)
-    local color = Color3.new(1, 1, 1) -- Màu trắng để hiển thị tất cả
+    -- 🟢 Chọn màu theo team
+    local color = (player.Team == Players.LocalPlayer.Team) and Color3.new(0, 0, 1) or Color3.new(1, 0, 0)
 
-    -- 🟢 Tạo Name ESP
-    local billboard = Instance.new("BillboardGui")
+    -- 📌 Name ESP
+    local billboard = Instance.new("BillboardGui", game.CoreGui)
     billboard.Adornee = head
     billboard.Size = UDim2.new(0, 100, 0, 30)
     billboard.StudsOffset = Vector3.new(0, 2, 0)
     billboard.AlwaysOnTop = true
-    billboard.Parent = game.CoreGui
 
     local textLabel = Instance.new("TextLabel", billboard)
     textLabel.Size = UDim2.new(1, 0, 1, 0)
@@ -31,36 +31,34 @@ local function applyESP(character, player)
     textLabel.TextStrokeTransparency = 0.5
     textLabel.Font = Enum.Font.SourceSansBold
     textLabel.TextSize = 14
-    textLabel.Parent = billboard
 
-    -- 🔴 Tạo Box ESP (Highlight)
-    local highlight = Instance.new("Highlight")
-    highlight.Parent = character
+    -- 📌 Box ESP (Highlight)
+    local highlight = Instance.new("Highlight", character)
     highlight.FillTransparency = 0.5
     highlight.OutlineColor = color
     highlight.OutlineTransparency = 0
 
-    -- 🎯 Tạo Hitbox (Vùng va chạm lớn hơn)
-    local hitbox = Instance.new("Part")
-    hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Kích thước hitbox cố định
+    -- 📌 Hitbox
+    local hitbox = Instance.new("Part", character)
+    hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
     hitbox.Transparency = 0.7
     hitbox.CanCollide = false
     hitbox.Anchored = true
     hitbox.Color = color
     hitbox.Material = Enum.Material.ForceField
-    hitbox.Parent = character
 
-    -- Cập nhật vị trí hitbox theo nhân vật
+    -- 📌 Cập nhật hitbox khi slider thay đổi
     local updateConnection
     updateConnection = RunService.RenderStepped:Connect(function()
-        if character and root then
+        if root then
             hitbox.Position = root.Position
+            hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
         else
             updateConnection:Disconnect()
         end
     end)
 
-    -- Xóa ESP khi nhân vật chết
+    -- 📌 Xóa ESP khi nhân vật chết
     character.Destroying:Connect(function()
         billboard:Destroy()
         highlight:Destroy()
@@ -68,19 +66,22 @@ local function applyESP(character, player)
     end)
 end
 
--- Áp dụng ESP + Hitbox cho tất cả người chơi đã có mặt
+-- 📌 Cập nhật hitbox khi kéo slider
+UserSlider.Changed:Connect(function(value)
+    hitboxSize = value
+end)
+
+-- 📌 Áp dụng cho tất cả người chơi
 for _, player in pairs(Players:GetPlayers()) do
-    if player.Character then
-        applyESP(player.Character, player)
-    end
+    if player.Character then createESP(player.Character, player) end
     player.CharacterAdded:Connect(function(character)
-        applyESP(character, player)
+        createESP(character, player)
     end)
 end
 
--- Áp dụng ESP + Hitbox cho người chơi mới vào
+-- 📌 Áp dụng cho người chơi mới vào
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function(character)
-        applyESP(character, player)
+        createESP(character, player)
     end)
 end)
