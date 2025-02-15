@@ -1,9 +1,10 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
     if player == Players.LocalPlayer then return end  -- Không áp dụng cho chính mình
+    player.CharacterAppearanceLoaded:Wait()  -- Đợi nhân vật load xong
+
     local character = player.Character
     if not character then return end
 
@@ -26,12 +27,12 @@ local function createESP(player)
 
     Billboard.Parent = humanoidRootPart
 
-    -- 📌 **Mở rộng Hitbox (Cập nhật liên tục)**
+    -- 📌 **Mở rộng Hitbox (Auto cập nhật)**
     task.spawn(function()
         while character and character.Parent do
-            humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Kích thước lớn hơn
+            humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Hitbox to hơn
             humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
-            humanoidRootPart.CanCollide = false  -- Tránh va chạm lỗi
+            humanoidRootPart.CanCollide = false
             wait(1)  -- Cập nhật hitbox mỗi giây
         end
     end)
@@ -45,17 +46,27 @@ local function createESP(player)
     highlight.OutlineTransparency = 0.1
 end
 
--- 🛠 Áp dụng ESP + Hitbox cho tất cả người chơi đã vào trước
-for _, player in pairs(Players:GetPlayers()) do
-    if player.Character then
-        createESP(player)  -- Thêm ESP ngay lập tức
+-- 🛠 **Auto chạy cho tất cả người chơi**
+local function autoApplyESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player.Character then
+            createESP(player)  -- Thêm ESP ngay lập tức
+        end
     end
 end
 
--- 🛠 Khi một người chơi mới vào game, áp dụng ESP
+-- 🚀 **Chạy auto mỗi 5 giây để đảm bảo không bị mất**
+task.spawn(function()
+    while true do
+        autoApplyESP()
+        wait(5)  -- Kiểm tra lại mỗi 5 giây
+    end
+end)
+
+-- 🚀 **Tự động áp dụng ESP cho người chơi mới**
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        wait(1)  -- Chờ nhân vật load xong
+        wait(1)  -- Chờ nhân vật load
         createESP(player)
     end)
 end)
