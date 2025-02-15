@@ -1,36 +1,14 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
--- 🛠 Hàm kiểm tra và tạo ESP + Hitbox
+-- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
     if player == Players.LocalPlayer then return end  -- Không áp dụng cho chính mình
-    player.CharacterAppearanceLoaded:Wait()  -- Đợi nhân vật load xong
-
     local character = player.Character
     if not character then return end
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoidRootPart then
-        print("[⚠] Không tìm thấy HumanoidRootPart!")
-        return
-    end
-
-    -- 🔄 Cập nhật hitbox mỗi giây
-    task.spawn(function()
-        while character and character.Parent do
-            humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Hitbox mở rộng
-            humanoidRootPart.Transparency = 0.7
-            humanoidRootPart.CanCollide = false
-            wait(1)
-        end
-    end)
-
-    -- 📌 **Tạo viền hitbox bằng SelectionBox**
-    local box = Instance.new("SelectionBox")
-    box.Adornee = humanoidRootPart
-    box.Color3 = Color3.fromRGB(255, 0, 0)  -- Màu đỏ
-    box.LineThickness = 0.05
-    box.Parent = humanoidRootPart
+    if not humanoidRootPart then return end
 
     -- 📌 **Hiển thị tên trên đầu**
     local Billboard = Instance.new("BillboardGui")
@@ -43,33 +21,41 @@ local function createESP(player)
     TextLabel.Size = UDim2.new(1, 0, 1, 0)
     TextLabel.BackgroundTransparency = 1
     TextLabel.Text = player.Name
-    TextLabel.TextColor3 = Color3.fromRGB(0, 255, 0)  -- Màu xanh lá
+    TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Màu đỏ
     TextLabel.TextScaled = true
 
     Billboard.Parent = humanoidRootPart
-end
 
--- 🛠 **Áp dụng ESP cho tất cả người chơi**
-local function autoApplyESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player.Character then
-            createESP(player)  -- Thêm ESP ngay lập tức
+    -- 📌 **Mở rộng Hitbox (Cập nhật liên tục)**
+    task.spawn(function()
+        while character and character.Parent do
+            humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Kích thước lớn hơn
+            humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
+            humanoidRootPart.CanCollide = false  -- Tránh va chạm lỗi
+            wait(1)  -- Cập nhật hitbox mỗi giây
         end
+    end)
+
+    -- 📌 **Tạo hiệu ứng phát sáng (Highlight)**
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.FillColor = Color3.fromRGB(0, 255, 0)  -- Màu xanh lá
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.1
+end
+
+-- 🛠 Áp dụng ESP + Hitbox cho tất cả người chơi đã vào trước
+for _, player in pairs(Players:GetPlayers()) do
+    if player.Character then
+        createESP(player)  -- Thêm ESP ngay lập tức
     end
 end
 
--- 🚀 **Chạy auto mỗi 5 giây để đảm bảo không bị mất**
-task.spawn(function()
-    while true do
-        autoApplyESP()
-        wait(5)  -- Kiểm tra lại mỗi 5 giây
-    end
-end)
-
--- 🚀 **Tự động áp dụng ESP cho người chơi mới**
+-- 🛠 Khi một người chơi mới vào game, áp dụng ESP
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        wait(1)  -- Chờ nhân vật load
+        wait(1)  -- Chờ nhân vật load xong
         createESP(player)
     end)
 end)
