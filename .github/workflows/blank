@@ -1,55 +1,48 @@
-local hitboxSize = 20 -- Kích thước mặc định của Hitbox
+--// Cấu hình (có thể chỉnh sửa)
+local HitboxSize = Vector3.new(5, 7, 5) -- Kích thước hitbox (X, Y, Z)
+local ESPColor1 = Color3.fromRGB(255, 0, 0) -- Màu 1 (Đỏ)
+local ESPColor2 = Color3.fromRGB(0, 255, 0) -- Màu 2 (Xanh)
+local ChangeColorTime = 1 -- Thời gian đổi màu (giây)
 
--- Hàm cập nhật Hitbox
-local function updateHitbox()
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-            player.Character.HumanoidRootPart.Transparency = 0.5
-        end
-    end
-    print("Hitbox Updated:", hitboxSize)
-end
-
--- Hàm tạo ESP
-local function createESP(player)
+--// Hàm tạo ESP và Hitbox
+function ApplyESPandHitbox(player)
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local esp = Instance.new("BoxHandleAdornment")
-        esp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
-        esp.Adornee = player.Character.HumanoidRootPart
-        esp.Color3 = Color3.new(1, 0, 0) -- Màu đỏ cố định
-        esp.AlwaysOnTop = true
-        esp.ZIndex = 10
-        esp.Parent = game.CoreGui
+        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+
+        -- Tạo Hitbox (nếu chưa có)
+        local hitbox = rootPart:FindFirstChild("HitboxESP")
+        if not hitbox then
+            hitbox = Instance.new("BoxHandleAdornment")
+            hitbox.Name = "HitboxESP"
+            hitbox.Adornee = rootPart
+            hitbox.Size = HitboxSize
+            hitbox.Color3 = ESPColor1
+            hitbox.AlwaysOnTop = true
+            hitbox.ZIndex = 10
+            hitbox.Parent = game.CoreGui
+        end
+
+        -- Đổi màu ESP liên tục
+        spawn(function()
+            while hitbox and hitbox.Parent do
+                hitbox.Color3 = ESPColor1
+                wait(ChangeColorTime)
+                hitbox.Color3 = ESPColor2
+                wait(ChangeColorTime)
+            end
+        end)
     end
 end
 
--- Nút tăng Hitbox
-Tab:CreateButton({
-   Name = "Tăng Hitbox",
-   Callback = function()
-       hitboxSize = math.min(50, hitboxSize + 5) -- Giới hạn tối đa 50
-       updateHitbox()
-   end
-})
-
--- Nút giảm Hitbox
-Tab:CreateButton({
-   Name = "Giảm Hitbox",
-   Callback = function()
-       hitboxSize = math.max(5, hitboxSize - 5) -- Giới hạn tối thiểu 5
-       updateHitbox()
-   end
-})
-
--- Cập nhật ESP cho tất cả người chơi hiện tại
-for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-    createESP(player)
+--// Áp dụng cho tất cả người chơi hiện tại
+for _, player in pairs(game.Players:GetPlayers()) do
+    ApplyESPandHitbox(player)
 end
 
--- Tạo ESP khi có người chơi mới vào
-game:GetService("Players").PlayerAdded:Connect(function(player)
+--// Theo dõi người chơi mới vào
+game.Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        createESP(player)
+        wait(1) -- Đợi nhân vật load
+        ApplyESPandHitbox(player)
     end)
 end)
