@@ -1,48 +1,86 @@
---// Cấu hình (có thể chỉnh sửa)
-local HitboxSize = Vector3.new(5, 7, 5) -- Kích thước hitbox (X, Y, Z)
-local ESPColor1 = Color3.fromRGB(255, 0, 0) -- Màu 1 (Đỏ)
-local ESPColor2 = Color3.fromRGB(0, 255, 0) -- Màu 2 (Xanh)
-local ChangeColorTime = 1 -- Thời gian đổi màu (giây)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
---// Hàm tạo ESP và Hitbox
-function ApplyESPandHitbox(player)
-    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-        local rootPart = player.Character:FindFirstChild("HumanoidRootPart")
+-- 🔹 Biến để thay đổi kích thước hitbox
+_G.hitboxSize = 10  -- Mặc định là 10 (Bạn có thể thay đổi)
 
-        -- Tạo Hitbox (nếu chưa có)
-        local hitbox = rootPart:FindFirstChild("HitboxESP")
-        if not hitbox then
-            hitbox = Instance.new("BoxHandleAdornment")
-            hitbox.Name = "HitboxESP"
-            hitbox.Adornee = rootPart
-            hitbox.Size = HitboxSize
-            hitbox.Color3 = ESPColor1
-            hitbox.AlwaysOnTop = true
-            hitbox.ZIndex = 10
-            hitbox.Parent = game.CoreGui
-        end
+local function applyESP(character, player)
+    if not character then return end
+    repeat wait() until character:FindFirstChild("HumanoidRootPart")
 
-        -- Đổi màu ESP liên tục
-        spawn(function()
-            while hitbox and hitbox.Parent do
-                hitbox.Color3 = ESPColor1
-                wait(ChangeColorTime)
-                hitbox.Color3 = ESPColor2
-                wait(ChangeColorTime)
-            end
-        end)
+    local head = character:FindFirstChild("Head")
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not head or not root then return end
+
+    -- 🟢 Cập nhật màu theo team
+    local color = Color3.new(1, 0, 0) -- 🔴 Mặc định là đỏ (kẻ địch)
+    if player.Team and player.Team == game.Players.LocalPlayer.Team then
+        color = Color3.new(0, 0, 1) -- 🔵 Xanh nước biển (đồng đội)
     end
+
+    -- 📌 Tạo Name ESP
+    local billboard = Instance.new("BillboardGui", game.CoreGui)
+    billboard.Adornee = head
+    billboard.Size = UDim2.new(0, 100, 0, 30)
+    billboard.StudsOffset = Vector3.new(0, 2, 0)
+    billboard.AlwaysOnTop = true
+
+    local textLabel = Instance.new("TextLabel", billboard)
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = player.Name
+    textLabel.TextColor3 = color
+    textLabel.TextStrokeTransparency = 0.5
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextSize = 14
+
+    -- 📌 Tạo Box ESP (Highlight)
+    local highlight = Instance.new("Highlight", character)
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = color
+    highlight.OutlineTransparency = 0
+
+    -- 📌 Tạo Hitbox
+    local hitbox = Instance.new("Part", character)
+    hitbox.Size = Vector3.new(_G.hitboxSize, _G.hitboxSize, _G.hitboxSize)
+    hitbox.Transparency = 0.7
+    hitbox.CanCollide = false
+    hitbox.Anchored = true
+    hitbox.Color = color
+    hitbox.Material = Enum.Material.ForceField
+
+    -- Cập nhật vị trí hitbox + thay đổi kích thước nếu `_G.hitboxSize` thay đổi
+    local updateConnection
+    updateConnection = RunService.RenderStepped:Connect(function()
+        if character and root then
+            hitbox.Position = root.Position
+            hitbox.Size = Vector3.new(_G.hitboxSize, _G.hitboxSize, _G.hitboxSize)
+        else
+            updateConnection:Disconnect()
+        end
+    end)
+
+    -- Xóa ESP khi nhân vật chết
+    character.Destroying:Connect(function()
+        billboard:Destroy()
+        highlight:Destroy()
+        hitbox:Destroy()
+    end)
 end
 
---// Áp dụng cho tất cả người chơi hiện tại
-for _, player in pairs(game.Players:GetPlayers()) do
-    ApplyESPandHitbox(player)
+-- 📌 Áp dụng ESP + Hitbox cho tất cả người chơi đã có mặt
+for _, player in pairs(Players:GetPlayers()) do
+    if player.Character then
+        applyESP(player.Character, player)
+    end
+    player.CharacterAdded:Connect(function(character)
+        applyESP(character, player)
+    end)
 end
 
---// Theo dõi người chơi mới vào
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        wait(1) -- Đợi nhân vật load
-        ApplyESPandHitbox(player)
+-- 📌 Áp dụng ESP + Hitbox cho người chơi mới vào
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        applyESP(character, player)
     end)
 end)
