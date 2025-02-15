@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 -- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
@@ -25,9 +26,15 @@ local function createESP(player)
 
     Billboard.Parent = humanoidRootPart
 
-    -- 📌 **Mở rộng Hitbox**
-    humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Tăng hitbox
-    humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
+    -- 📌 **Mở rộng Hitbox (Cập nhật liên tục)**
+    task.spawn(function()
+        while character and character.Parent do
+            humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Kích thước lớn hơn
+            humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
+            humanoidRootPart.CanCollide = false  -- Tránh va chạm lỗi
+            wait(1)  -- Cập nhật hitbox mỗi giây
+        end
+    end)
 
     -- 📌 **Tạo hiệu ứng phát sáng (Highlight)**
     local highlight = Instance.new("Highlight")
