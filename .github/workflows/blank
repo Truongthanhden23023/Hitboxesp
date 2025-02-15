@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+-- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
     if player == Players.LocalPlayer then return end  -- Không áp dụng cho chính mình
     player.CharacterAppearanceLoaded:Wait()  -- Đợi nhân vật load xong
@@ -10,6 +11,9 @@ local function createESP(player)
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then return end
+
+    -- 🛠 Tắt thuộc tính Archivable để sửa lỗi hitbox bị khoá
+    humanoidRootPart.Archivable = true
 
     -- 📌 **Hiển thị tên trên đầu**
     local Billboard = Instance.new("BillboardGui")
@@ -33,6 +37,16 @@ local function createESP(player)
             humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Hitbox to hơn
             humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
             humanoidRootPart.CanCollide = false
+
+            -- 🔲 **Tạo BoxHandleAdornment để hiển thị hitbox**
+            local box = Instance.new("BoxHandleAdornment")
+            box.Size = humanoidRootPart.Size
+            box.Color3 = Color3.new(1, 0, 0)  -- Màu đỏ
+            box.Adornee = humanoidRootPart
+            box.AlwaysOnTop = true
+            box.ZIndex = 5
+            box.Parent = humanoidRootPart
+
             wait(1)  -- Cập nhật hitbox mỗi giây
         end
     end)
