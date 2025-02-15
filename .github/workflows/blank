@@ -1,5 +1,5 @@
 local ESP_Color = Color3.fromRGB(0, 0, 255) -- Màu xanh nước biển
-local Default_Hitbox_Size = Vector3.new(5, 5, 5) -- Kích thước hitbox mặc định
+local Default_Hitbox_Size = Vector3.new(2, 2, 2) -- Kích thước hitbox mặc định
 local Player_Scale = 0.5 -- Tỷ lệ thu nhỏ nhân vật (1.0 = bình thường, <1 = nhỏ hơn)
 
 -- Hàm áp dụng ESP, Hitbox và thu nhỏ nhân vật
