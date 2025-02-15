@@ -1,39 +1,48 @@
-local ESP_Color = Color3.fromRGB(0, 0, 255) -- Màu xanh nước biển
-local Default_Hitbox_Size = Vector3.new(10, 10, 10) -- Hitbox lớn hơn
-local Player_Scale = 0.5 -- Thu nhỏ nhân vật
+local Hitbox_Color = Color3.fromRGB(255, 255, 255) -- Viền hitbox màu trắng
+local Hitbox_Transparency = 0.5 -- Độ trong suốt của hitbox
+local Hitbox_Size = Vector3.new(5, 7, 5) -- Kích thước hitbox
+local Player_Scale = 0.8 -- Giảm kích thước nhân vật
 
--- Hàm áp dụng ESP và Hitbox
-local function ApplyESPandHitbox(player, hitboxSize, scale)
+-- Hàm tạo hitbox + viền ESP cho nhân vật
+local function ApplyHitboxAndESP(player)
     if player.Character then
         local char = player.Character
 
-        -- **ESP Player**
+        -- **Tạo viền trắng ESP**
         local highlight = Instance.new("Highlight", char)
-        highlight.FillColor = ESP_Color
-        highlight.OutlineColor = Color3.new(1, 1, 1) -- Viền trắng
+        highlight.FillColor = Color3.new(0, 0, 0) -- Màu trong suốt (chỉ có viền)
+        highlight.OutlineColor = Hitbox_Color -- Viền trắng
+        highlight.OutlineTransparency = Hitbox_Transparency
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Luôn hiển thị
 
-        -- **Hitbox Player (Hình hộp)**
+        -- **Tạo Hitbox Lớn**
         for _, part in pairs(char:GetChildren()) do
-            if part:IsA("BasePart") then
-                part.Size = hitboxSize
-                part.Transparency = 0.5
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                part.Size = Hitbox_Size -- Phóng to hitbox
+                part.Transparency = Hitbox_Transparency -- Làm hitbox trong suốt
+                part.CanCollide = false -- Không va chạm
             end
         end
 
         -- **Thu nhỏ nhân vật**
         if char:FindFirstChild("Humanoid") then
             local humanoid = char:FindFirstChild("Humanoid")
-            humanoid.BodyDepthScale.Value = scale
-            humanoid.BodyHeightScale.Value = scale
-            humanoid.BodyWidthScale.Value = scale
-            humanoid.HeadScale.Value = scale
+            humanoid.BodyDepthScale.Value = Player_Scale
+            humanoid.BodyHeightScale.Value = Player_Scale
+            humanoid.BodyWidthScale.Value = Player_Scale
+            humanoid.HeadScale.Value = Player_Scale
         end
     end
 end
 
 -- Áp dụng cho tất cả người chơi hiện tại
 for _, player in pairs(game.Players:GetPlayers()) do
-    ApplyESPandHitbox(player, Default_Hitbox_Size, Player_Scale)
+    ApplyHitboxAndESP(player)
 end
 
--- Lắng nghe khi có người chơi
+-- Lắng nghe khi có người chơi mới vào game
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        ApplyHitboxAndESP(player)
+    end)
+end)
