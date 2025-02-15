@@ -1,5 +1,8 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local espEnabled = true -- Trạng thái bật/tắt ESP
+local hitboxObjects = {} -- Lưu các hitbox để xóa khi cần
 
 -- 🛠 Hàm tạo ESP + Hitbox cho một người chơi
 local function createESP(player)
@@ -9,6 +12,9 @@ local function createESP(player)
 
     local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
     if not humanoidRootPart then return end
+
+    -- Nếu ESP đang bị tắt, không tạo mới
+    if not espEnabled then return end
 
     -- 📌 **Hiển thị tên trên đầu**
     local Billboard = Instance.new("BillboardGui")
@@ -23,12 +29,11 @@ local function createESP(player)
     TextLabel.Text = player.Name
     TextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)  -- Màu đỏ
     TextLabel.TextScaled = true
-
     Billboard.Parent = humanoidRootPart
 
     -- 📌 **Mở rộng Hitbox (Cập nhật liên tục)**
-    task.spawn(function()
-        while character and character.Parent do
+    local hitboxTask = task.spawn(function()
+        while character and character.Parent and espEnabled do
             humanoidRootPart.Size = Vector3.new(10, 10, 10)  -- Kích thước lớn hơn
             humanoidRootPart.Transparency = 0.7  -- Làm trong suốt nhẹ
             humanoidRootPart.CanCollide = false  -- Tránh va chạm lỗi
@@ -43,19 +48,52 @@ local function createESP(player)
     highlight.FillTransparency = 0.5
     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
     highlight.OutlineTransparency = 0.1
+
+    -- Lưu các object để có thể xóa sau này
+    hitboxObjects[player] = { Billboard, highlight, hitboxTask }
 end
 
--- 🛠 Áp dụng ESP + Hitbox cho tất cả người chơi đã vào trước
+-- 🛠 **Xóa toàn bộ ESP + Hitbox**
+local function removeESP()
+    for _, data in pairs(hitboxObjects) do
+        if data[1] then data[1]:Destroy() end  -- Xóa Billboard
+        if data[2] then data[2]:Destroy() end  -- Xóa Highlight
+        if data[3] then task.cancel(data[3]) end -- Dừng cập nhật hitbox
+    end
+    hitboxObjects = {}
+end
+
+-- 🛠 **Tự động áp dụng ESP cho người chơi đã vào trước**
 for _, player in pairs(Players:GetPlayers()) do
     if player.Character then
-        createESP(player)  -- Thêm ESP ngay lập tức
+        createESP(player)
     end
 end
 
--- 🛠 Khi một người chơi mới vào game, áp dụng ESP
+-- 🛠 **Áp dụng ESP cho người chơi mới vào**
 Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        wait(1)  -- Chờ nhân vật load xong
+        wait(1) -- Đợi nhân vật load
         createESP(player)
     end)
+end)
+
+-- 🎮 **Bật/Tắt ESP bằng phím "H"**
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.H then
+        espEnabled = not espEnabled  -- Đảo trạng thái ESP
+
+        if espEnabled then
+            print("[✅] ESP ĐÃ BẬT!")
+            for _, player in pairs(Players:GetPlayers()) do
+                if player.Character then
+                    createESP(player)
+                end
+            end
+        else
+            print("[❌] ESP ĐÃ TẮT!")
+            removeESP()
+        end
+    end
 end)
