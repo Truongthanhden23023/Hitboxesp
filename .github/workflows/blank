@@ -1,48 +1,43 @@
-local Hitbox_Color = Color3.fromRGB(255, 255, 255) -- Viền hitbox màu trắng
-local Hitbox_Transparency = 0.5 -- Độ trong suốt của hitbox
-local Hitbox_Size = Vector3.new(5, 7, 5) -- Kích thước hitbox
-local Player_Scale = 0.8 -- Giảm kích thước nhân vật
+local function applyESP(player)
+    if player == game.Players.LocalPlayer then return end
+    local character = player.Character
+    if not character then return end
 
--- Hàm tạo hitbox + viền ESP cho nhân vật
-local function ApplyHitboxAndESP(player)
-    if player.Character then
-        local char = player.Character
+    -- Tạo ESP Box
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.Adornee = character
+    highlight.FillColor = Color3.fromRGB(255, 0, 0) -- Màu đỏ
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255) -- Viền trắng
+    highlight.FillTransparency = 0.5 -- Độ trong suốt bên trong
+    highlight.OutlineTransparency = 0 -- Viền rõ ràng
+end
 
-        -- **Tạo viền trắng ESP**
-        local highlight = Instance.new("Highlight", char)
-        highlight.FillColor = Color3.new(0, 0, 0) -- Màu trong suốt (chỉ có viền)
-        highlight.OutlineColor = Hitbox_Color -- Viền trắng
-        highlight.OutlineTransparency = Hitbox_Transparency
-        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- Luôn hiển thị
+local function modifyHitbox(player)
+    local character = player.Character
+    if not character then return end
 
-        -- **Tạo Hitbox Lớn**
-        for _, part in pairs(char:GetChildren()) do
-            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                part.Size = Hitbox_Size -- Phóng to hitbox
-                part.Transparency = Hitbox_Transparency -- Làm hitbox trong suốt
-                part.CanCollide = false -- Không va chạm
-            end
-        end
-
-        -- **Thu nhỏ nhân vật**
-        if char:FindFirstChild("Humanoid") then
-            local humanoid = char:FindFirstChild("Humanoid")
-            humanoid.BodyDepthScale.Value = Player_Scale
-            humanoid.BodyHeightScale.Value = Player_Scale
-            humanoid.BodyWidthScale.Value = Player_Scale
-            humanoid.HeadScale.Value = Player_Scale
-        end
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if humanoidRootPart then
+        humanoidRootPart.Size = Vector3.new(5, 5, 5) -- Mở rộng hitbox
+        humanoidRootPart.Transparency = 0.5 -- Làm hitbox trong suốt một phần
+        humanoidRootPart.BrickColor = BrickColor.new("Bright red") -- Đổi màu hitbox thành đỏ
+        humanoidRootPart.Material = Enum.Material.Neon -- Làm hitbox phát sáng
     end
 end
 
--- Áp dụng cho tất cả người chơi hiện tại
+-- Áp dụng ESP và Hitbox cho tất cả người chơi
 for _, player in pairs(game.Players:GetPlayers()) do
-    ApplyHitboxAndESP(player)
+    if player ~= game.Players.LocalPlayer then
+        applyESP(player)
+        modifyHitbox(player)
+    end
 end
 
--- Lắng nghe khi có người chơi mới vào game
+-- Lắng nghe khi có người chơi mới tham gia
 game.Players.PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
-        ApplyHitboxAndESP(player)
+        applyESP(player)
+        modifyHitbox(player)
     end)
 end)
