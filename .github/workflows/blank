@@ -1,86 +1,44 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+local ESP_Color = Color3.fromRGB(0, 0, 255) -- Màu xanh nước biển
+local Default_Hitbox_Size = Vector3.new(10, 10, 10) -- Kích thước mặc định của hitbox
 
--- 🔹 Biến để thay đổi kích thước hitbox
-_G.hitboxSize = 10  -- Mặc định là 10 (Bạn có thể thay đổi)
-
-local function applyESP(character, player)
-    if not character then return end
-    repeat wait() until character:FindFirstChild("HumanoidRootPart")
-
-    local head = character:FindFirstChild("Head")
-    local root = character:FindFirstChild("HumanoidRootPart")
-    if not head or not root then return end
-
-    -- 🟢 Cập nhật màu theo team
-    local color = Color3.new(1, 0, 0) -- 🔴 Mặc định là đỏ (kẻ địch)
-    if player.Team and player.Team == game.Players.LocalPlayer.Team then
-        color = Color3.new(0, 0, 1) -- 🔵 Xanh nước biển (đồng đội)
-    end
-
-    -- 📌 Tạo Name ESP
-    local billboard = Instance.new("BillboardGui", game.CoreGui)
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 100, 0, 30)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel", billboard)
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = player.Name
-    textLabel.TextColor3 = color
-    textLabel.TextStrokeTransparency = 0.5
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextSize = 14
-
-    -- 📌 Tạo Box ESP (Highlight)
-    local highlight = Instance.new("Highlight", character)
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = color
-    highlight.OutlineTransparency = 0
-
-    -- 📌 Tạo Hitbox
-    local hitbox = Instance.new("Part", character)
-    hitbox.Size = Vector3.new(_G.hitboxSize, _G.hitboxSize, _G.hitboxSize)
-    hitbox.Transparency = 0.7
-    hitbox.CanCollide = false
-    hitbox.Anchored = true
-    hitbox.Color = color
-    hitbox.Material = Enum.Material.ForceField
-
-    -- Cập nhật vị trí hitbox + thay đổi kích thước nếu `_G.hitboxSize` thay đổi
-    local updateConnection
-    updateConnection = RunService.RenderStepped:Connect(function()
-        if character and root then
-            hitbox.Position = root.Position
-            hitbox.Size = Vector3.new(_G.hitboxSize, _G.hitboxSize, _G.hitboxSize)
-        else
-            updateConnection:Disconnect()
-        end
-    end)
-
-    -- Xóa ESP khi nhân vật chết
-    character.Destroying:Connect(function()
-        billboard:Destroy()
-        highlight:Destroy()
-        hitbox:Destroy()
-    end)
-end
-
--- 📌 Áp dụng ESP + Hitbox cho tất cả người chơi đã có mặt
-for _, player in pairs(Players:GetPlayers()) do
+-- Hàm áp dụng ESP và Hitbox cho nhân vật
+local function ApplyESPandHitbox(player, hitboxSize)
     if player.Character then
-        applyESP(player.Character, player)
+        local char = player.Character
+
+        -- **ESP Player**
+        local highlight = Instance.new("Highlight", char)
+        highlight.FillColor = ESP_Color
+        highlight.OutlineColor = Color3.new(1, 1, 1) -- Viền trắng
+
+        -- **Hitbox Player**
+        for _, part in pairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                part.Size = hitboxSize -- Áp dụng kích thước hitbox tùy chỉnh
+                part.Transparency = 0.5 -- Làm hitbox trong suốt một phần
+            end
+        end
     end
-    player.CharacterAdded:Connect(function(character)
-        applyESP(character, player)
-    end)
 end
 
--- 📌 Áp dụng ESP + Hitbox cho người chơi mới vào
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        applyESP(character, player)
+-- Áp dụng cho tất cả người chơi hiện tại trong game với kích thước mặc định
+for _, player in pairs(game.Players:GetPlayers()) do
+    ApplyESPandHitbox(player, Default_Hitbox_Size)
+end
+
+-- Lắng nghe sự kiện khi người chơi mới tham gia
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        ApplyESPandHitbox(player, Default_Hitbox_Size) -- Áp dụng cho người chơi mới vào
     end)
 end)
+
+-- **Hàm thay đổi kích thước hitbox khi cần thiết**
+local function ChangeHitboxSize(newSize)
+    Default_Hitbox_Size = newSize -- Cập nhật kích thước hitbox mới
+    for _, player in pairs(game.Players:GetPlayers()) do
+        ApplyESPandHitbox(player, Default_Hitbox_Size) -- Cập nhật hitbox mới cho tất cả người chơi
+    end
+end
+
+-- **Ví dụ: Gọi ChangeHitboxSize(Vector3.new(10, 10, 10)) để thay đổi hitbox**
