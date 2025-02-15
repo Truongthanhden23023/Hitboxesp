@@ -1,8 +1,9 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
+-- 🛠 Hàm tạo ESP + Hitbox
 local function createESP(player)
-    if player == Players.LocalPlayer then return end  -- Không hiển thị cho chính mình
+    if player == Players.LocalPlayer then return end  -- Không áp dụng cho chính mình
     local character = player.Character
     if not character then return end
 
@@ -38,6 +39,7 @@ local function createESP(player)
     highlight.OutlineTransparency = 0.1
 end
 
+-- 🛠 Hàm xử lý khi có người mới vào game
 local function onPlayerAdded(player)
     player.CharacterAdded:Connect(function()
         wait(1)  -- Chờ nhân vật load xong
@@ -45,7 +47,13 @@ local function onPlayerAdded(player)
     end)
 end
 
+-- 🚀 **Áp dụng ESP cho tất cả người chơi đã vào trước**
 for _, player in pairs(Players:GetPlayers()) do
-    onPlayerAdded(player)
+    if player.Character then
+        createESP(player)  -- Thêm ESP ngay lập tức
+    end
+    onPlayerAdded(player)  -- Theo dõi người chơi mới
 end
+
+-- 🚀 **Áp dụng ESP cho người chơi mới**
 Players.PlayerAdded:Connect(onPlayerAdded)
