@@ -1,8 +1,8 @@
 local ESP_Color = Color3.fromRGB(0, 0, 255) -- Màu xanh nước biển
-local Default_Hitbox_Size = Vector3.new(2, 2, 2) -- Kích thước hitbox mặc định
-local Player_Scale = 0.5 -- Tỷ lệ thu nhỏ nhân vật (1.0 = bình thường, <1 = nhỏ hơn)
+local Default_Hitbox_Size = Vector3.new(10, 10, 10) -- Hitbox lớn hơn
+local Player_Scale = 0.5 -- Thu nhỏ nhân vật
 
--- Hàm áp dụng ESP, Hitbox và thu nhỏ nhân vật
+-- Hàm áp dụng ESP và Hitbox
 local function ApplyESPandHitbox(player, hitboxSize, scale)
     if player.Character then
         local char = player.Character
@@ -12,11 +12,11 @@ local function ApplyESPandHitbox(player, hitboxSize, scale)
         highlight.FillColor = ESP_Color
         highlight.OutlineColor = Color3.new(1, 1, 1) -- Viền trắng
 
-        -- **Hitbox Player**
+        -- **Hitbox Player (Hình hộp)**
         for _, part in pairs(char:GetChildren()) do
             if part:IsA("BasePart") then
-                part.Size = hitboxSize -- Áp dụng kích thước hitbox tùy chỉnh
-                part.Transparency = 0.5 -- Làm hitbox trong suốt một phần
+                part.Size = hitboxSize
+                part.Transparency = 0.5
             end
         end
 
@@ -31,34 +31,9 @@ local function ApplyESPandHitbox(player, hitboxSize, scale)
     end
 end
 
--- Áp dụng cho tất cả người chơi hiện tại trong game
+-- Áp dụng cho tất cả người chơi hiện tại
 for _, player in pairs(game.Players:GetPlayers()) do
     ApplyESPandHitbox(player, Default_Hitbox_Size, Player_Scale)
 end
 
--- Lắng nghe sự kiện khi người chơi mới tham gia
-game.Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        ApplyESPandHitbox(player, Default_Hitbox_Size, Player_Scale) -- Áp dụng cho người chơi mới vào
-    end)
-end)
-
--- **Hàm thay đổi kích thước hitbox khi cần thiết**
-local function ChangeHitboxSize(newSize)
-    Default_Hitbox_Size = newSize -- Cập nhật kích thước hitbox mới
-    for _, player in pairs(game.Players:GetPlayers()) do
-        ApplyESPandHitbox(player, Default_Hitbox_Size, Player_Scale) -- Cập nhật hitbox mới cho tất cả người chơi
-    end
-end
-
--- **Hàm thay đổi kích thước nhân vật**
-local function ChangePlayerScale(newScale)
-    Player_Scale = newScale -- Cập nhật tỷ lệ mới
-    for _, player in pairs(game.Players:GetPlayers()) do
-        ApplyESPandHitbox(player, Default_Hitbox_Size, Player_Scale) -- Cập nhật cho tất cả người chơi
-    end
-end
-
--- **Ví dụ:**
--- ChangeHitboxSize(Vector3.new(3, 3, 3)) -- Giảm kích thước hitbox
--- ChangePlayerScale(0.7) -- Điều chỉnh nhân vật nhỏ lại
+-- Lắng nghe khi có người chơi
