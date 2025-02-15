@@ -1,0 +1,96 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Tạo giá trị kích thước hitbox (mặc định)
+local hitboxSize = 7  
+local sliderValue = 7  -- Biến lưu giá trị từ Slider UI
+
+-- Xác định kẻ địch hay đồng đội
+local function isEnemy(player)
+    return player.Team ~= LocalPlayer.Team
+end
+
+local function createESP(player)
+    if player == LocalPlayer then return end -- Không tạo ESP cho chính mình
+    player.CharacterAdded:Connect(function(character)
+        repeat wait() until character:FindFirstChild("HumanoidRootPart")
+
+        local head = character:FindFirstChild("Head")
+        local root = character:FindFirstChild("HumanoidRootPart")
+        if not head or not root then return end
+
+        -- Xác định màu sắc dựa trên team
+        local color = isEnemy(player) and Color3.new(1, 0, 0) or Color3.new(0, 0, 1)
+
+        -- 🟢 Tạo Name ESP
+        local billboard = Instance.new("BillboardGui")
+        billboard.Adornee = head
+        billboard.Size = UDim2.new(0, 100, 0, 30)
+        billboard.StudsOffset = Vector3.new(0, 2, 0)
+        billboard.AlwaysOnTop = true
+        billboard.Parent = game.CoreGui
+
+        local textLabel = Instance.new("TextLabel", billboard)
+        textLabel.Size = UDim2.new(1, 0, 1, 0)
+        textLabel.BackgroundTransparency = 1
+        textLabel.Text = player.Name
+        textLabel.TextColor3 = color
+        textLabel.TextStrokeTransparency = 0.5
+        textLabel.Font = Enum.Font.SourceSansBold
+        textLabel.TextSize = 14
+        textLabel.Parent = billboard
+
+        -- 🔴 Tạo Box ESP (Highlight)
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = character
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = color
+        highlight.OutlineTransparency = 0
+
+        -- 🎯 Tạo Hitbox (Vùng va chạm lớn hơn)
+        local hitbox = Instance.new("Part")
+        hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Kích thước hitbox
+        hitbox.Transparency = 0.7
+        hitbox.CanCollide = false
+        hitbox.Anchored = true
+        hitbox.Color = color
+        hitbox.Material = Enum.Material.ForceField
+        hitbox.Parent = character
+
+        -- Cập nhật vị trí hitbox theo nhân vật
+        RunService.RenderStepped:Connect(function()
+            if character and root then
+                hitbox.Position = root.Position
+                hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Cập nhật kích thước hitbox
+            end
+        end)
+
+        -- Xóa ESP khi nhân vật chết
+        player.CharacterRemoving:Connect(function()
+            billboard:Destroy()
+            highlight:Destroy()
+            hitbox:Destroy()
+        end)
+    end)
+end
+
+-- Áp dụng ESP cho tất cả người chơi hiện tại
+for _, player in pairs(Players:GetPlayers()) do
+    createESP(player)
+end
+
+-- Áp dụng ESP cho người chơi mới vào
+Players.PlayerAdded:Connect(createESP)
+
+-- 🔥 Kết nối với Slider UI
+local function onSliderChanged(value)
+    hitboxSize = math.max(2, value) -- Giữ giá trị tối thiểu là 2
+    print("Hitbox Size Updated: " .. hitboxSize)
+end
+
+-- Gán sự kiện cho Slider (Thay 'Slider' bằng tên thực tế của Slider trong GUI của bạn)
+local slider = script.Parent:FindFirstChild("Slider") -- Đảm bảo bạn có Slider trong GUI
+if slider then
+    slider.Changed:Connect(onSliderChanged)
+end
