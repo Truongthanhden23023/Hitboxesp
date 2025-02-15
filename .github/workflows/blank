@@ -1,15 +1,4 @@
 local hitboxSize = 20 -- Kích thước mặc định của Hitbox
-local espColor = Color3.new(1, 0, 0) -- Màu đỏ mặc định
-
--- Hàm đổi màu ESP giữa đỏ và xanh
-local function toggleESPColor()
-    if espColor == Color3.new(1, 0, 0) then
-        espColor = Color3.new(0, 0, 1) -- Chuyển sang xanh
-    else
-        espColor = Color3.new(1, 0, 0) -- Chuyển lại đỏ
-    end
-    print("ESP Color Changed")
-end
 
 -- Hàm cập nhật Hitbox
 local function updateHitbox()
@@ -19,52 +8,46 @@ local function updateHitbox()
             player.Character.HumanoidRootPart.Transparency = 0.5
         end
     end
+    print("Hitbox Updated:", hitboxSize)
 end
 
--- Nút tăng Hitbox
-local IncreaseButton = Tab:CreateButton({
-   Name = "Tăng Hitbox",
-   Callback = function()
-       hitboxSize = math.min(50, hitboxSize + 5) -- Tăng lên nhưng không quá 50
-       updateHitbox()
-   end
-})
-
--- Nút giảm Hitbox
-local DecreaseButton = Tab:CreateButton({
-   Name = "Giảm Hitbox",
-   Callback = function()
-       hitboxSize = math.max(5, hitboxSize - 5) -- Giảm nhưng không nhỏ hơn 5
-       updateHitbox()
-   end
-})
-
--- Nút đổi màu ESP
-local ToggleESPButton = Tab:CreateButton({
-   Name = "Đổi màu ESP",
-   Callback = function()
-       toggleESPColor()
-   end
-})
-
--- Hàm hiển thị ESP trên tất cả người chơi
+-- Hàm tạo ESP
 local function createESP(player)
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         local esp = Instance.new("BoxHandleAdornment")
         esp.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)
         esp.Adornee = player.Character.HumanoidRootPart
-        esp.Color3 = espColor
+        esp.Color3 = Color3.new(1, 0, 0) -- Màu đỏ cố định
         esp.AlwaysOnTop = true
         esp.ZIndex = 10
         esp.Parent = game.CoreGui
     end
 end
 
--- Cập nhật ESP cho tất cả người chơi hiện tại và mới vào
+-- Nút tăng Hitbox
+Tab:CreateButton({
+   Name = "Tăng Hitbox",
+   Callback = function()
+       hitboxSize = math.min(50, hitboxSize + 5) -- Giới hạn tối đa 50
+       updateHitbox()
+   end
+})
+
+-- Nút giảm Hitbox
+Tab:CreateButton({
+   Name = "Giảm Hitbox",
+   Callback = function()
+       hitboxSize = math.max(5, hitboxSize - 5) -- Giới hạn tối thiểu 5
+       updateHitbox()
+   end
+})
+
+-- Cập nhật ESP cho tất cả người chơi hiện tại
 for _, player in pairs(game:GetService("Players"):GetPlayers()) do
     createESP(player)
 end
 
+-- Tạo ESP khi có người chơi mới vào
 game:GetService("Players").PlayerAdded:Connect(function(player)
     player.CharacterAdded:Connect(function()
         createESP(player)
