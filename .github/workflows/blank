@@ -2,8 +2,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
--- Kích thước mặc định
-local espSize = 7
+-- Kích thước cố định của ESP & Hitbox
 local hitboxSize = 7
 
 -- Xác định kẻ địch hoặc đồng đội
@@ -50,7 +49,7 @@ local function createESP(player)
 
         -- 🎯 Tạo Hitbox (Vùng va chạm lớn hơn)
         local hitbox = Instance.new("Part")
-        hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Kích thước hitbox
+        hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Kích thước hitbox cố định
         hitbox.Transparency = 0.7
         hitbox.CanCollide = false
         hitbox.Anchored = true
@@ -62,7 +61,6 @@ local function createESP(player)
         RunService.RenderStepped:Connect(function()
             if character and root then
                 hitbox.Position = root.Position
-                hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize) -- Cập nhật kích thước hitbox
             end
         end)
 
@@ -82,16 +80,3 @@ end
 
 -- Áp dụng ESP cho người chơi mới vào
 Players.PlayerAdded:Connect(createESP)
-
--- 🔥 Kết nối với Slider UI để điều chỉnh kích thước Hitbox & ESP
-local function onSliderChanged(value)
-    hitboxSize = math.max(2, value) -- Giữ giá trị tối thiểu là 2
-    espSize = math.max(2, value) -- Cập nhật kích thước ESP
-    print("Updated Hitbox & ESP Size: " .. value)
-end
-
--- Gán sự kiện cho Slider (Thay 'Slider' bằng tên thực tế của Slider trong GUI của bạn)
-local slider = script.Parent:FindFirstChild("Slider") -- Đảm bảo bạn có Slider trong GUI
-if slider then
-    slider.Changed:Connect(onSliderChanged)
-end
